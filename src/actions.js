@@ -2,7 +2,8 @@ const request = require('request');
 const state = require('../src/state');
 
 exports.Actions = class Actions {
-    constructor(servers) {
+    constructor(currentServer, servers) {
+        this.currentServer = currentServer;
         this.servers = servers;
         this.state = new state.State();
         this.updateServersStatus(this);
@@ -17,7 +18,40 @@ exports.Actions = class Actions {
                 };
                 obj.state.servers[server] = await obj._sendRequest(options);
             });
+
+            if (!obj.isLeaderAvailable()) {
+                obj.state.leader = undefined;
+            }
+            if (obj.state.leader === undefined) {
+                obj.initCurrentServerLeader();
+            } else {
+
+            }
         }, 1000);
+    }
+
+    isLeaderAvailable() {
+        console.log(this.currentServer, this.state.servers[this.currentServer]);
+        if (this.state.servers[this.currentServer] === undefined) {
+            return false;
+        }
+        if (this.state.servers[this.currentServer]['error'] !== undefined) {
+            return false;
+        }
+        if (this.state.servers[this.currentServer]['status'] === 'Ok') {
+            return true;
+        }
+
+        return false;
+    }
+
+    initCurrentServerLeader() {
+        console.log('initCurrentServerLeader');
+        this.state.groupNumber = new Date().getTime();
+        this.state.leader = this.currentServer;
+        this.state.groupServers = [this.currentServer];
+        this.state.isLeader = true;
+        console.log(this);
     }
 
     async _sendRequest(options) {
