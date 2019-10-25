@@ -5,14 +5,16 @@ exports.Actions = class Actions {
     constructor(servers) {
         this.servers = servers;
         this.state = new state.State();
-        const obj = this;
+        this.updateServersStatus(this);
+    }
+
+    updateServersStatus(obj) {
         setInterval(() => {
-            this.servers.forEach(async function(server) {
+            obj.servers.forEach(async function (server) {
                 const options = {
                     url: 'http://' + server + '/ping',
                     method: 'GET',
                 };
-
                 obj.state.servers[server] = await obj._sendRequest(options);
             });
         }, 1000);
