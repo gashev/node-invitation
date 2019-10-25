@@ -15,5 +15,9 @@
   "bugs": {
     "url": "https://github.com/gashev/node-invitation/issues"
   },
-  "homepage": "https://github.com/gashev/node-invitation#readme"
+  "homepage": "https://github.com/gashev/node-invitation#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "request": "^2.88.0"
+  }
 }
