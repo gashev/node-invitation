@@ -25,7 +25,10 @@ exports.Actions = class Actions {
             if (obj.state.leader === undefined) {
                 obj.initCurrentServerLeader();
             } else {
-
+                if (obj.state.isLeader) {
+                    const leader = obj.getAnotherLeader();
+                    console.log(obj.currentServer, 'Another leader - ', leader);
+                }
             }
         }, 1000);
     }
@@ -52,6 +55,16 @@ exports.Actions = class Actions {
         this.state.groupServers = [this.currentServer];
         this.state.isLeader = true;
         console.log(this);
+    }
+
+    getAnotherLeader() {
+        const obj = this;
+        const diff = this.servers.filter(function(i) {return obj.state.groupServers.indexOf(i) < 0;});
+        if (diff.length === 0) {
+            return undefined;
+        }
+
+        return diff[0];
     }
 
     async _sendRequest(options) {
