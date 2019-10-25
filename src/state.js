@@ -3,5 +3,6 @@ exports.State = class State {
         this.groupNumber = 0;
         this.groupServers = [];
         this.leader = undefined;
+        this.servers = {};
     }
 }

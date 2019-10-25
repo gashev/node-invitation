@@ -10,12 +10,22 @@ exports.initApp = function(ip, port, servers) {
     app.get('/', function(req, res) {
         res.send({
             group: a.state.groupNumber,
-            servers: a.state.groupServers,
-            leader: a.state.leader
+            groupServers: a.state.groupServers,
+            leader: a.state.leader,
+            servers: a.state.servers,
+        });
+    });
+
+    app.get('/ping', function(req, res) {
+        console.log('/ping request');
+        res.send({
+            status: 'Ok',
+            time: new Date().getTime(),
         });
     });
 
     app.post('/', function(req, res) {
+        console.log('/ request');
         switch (req.body.action) {
             default:
                 res.send('{"error": "Incorrect action"}');
