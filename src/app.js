@@ -1,5 +1,4 @@
 const express = require('express');
-
 const actions = require('../src/actions');
 
 exports.initApp = function(ip, port, servers) {
@@ -25,9 +24,7 @@ exports.initApp = function(ip, port, servers) {
         console.log('/ request');
         switch (req.body.action) {
             case 'merge':
-                const result = await a[req.body.action + 'Action'](req.body);
-                console.log('RESULT IN app.js: ', result)
-                res.send(result);
+                res.send(await a[req.body.action + 'Action'](req.body));
                 break;
             default:
                 res.send('{"error": "Incorrect action"}');
