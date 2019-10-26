@@ -28,9 +28,10 @@ exports.Actions = class Actions {
                 if (obj.state.isLeader) {
                     const leader = obj.getAnotherLeader();
                     console.log(obj.currentServer, 'Another leader - ', leader);
+                    obj.merge(leader);
                 }
             }
-        }, 1000);
+        }, 10000);
     }
 
     isLeaderAvailable() {
@@ -59,12 +60,28 @@ exports.Actions = class Actions {
 
     getAnotherLeader() {
         const obj = this;
-        const diff = this.servers.filter(function(i) {return obj.state.groupServers.indexOf(i) < 0;});
-        if (diff.length === 0) {
-            return undefined;
-        }
+        return this.servers.filter(function(i) {
+            return obj.state.groupServers.indexOf(i) < 0;
+        });
+    }
 
-        return diff[0];
+    async merge(leader) {
+        const options = {
+            url: 'http://' + leader,
+            body: JSON.stringify({
+                action: 'merge',
+                groupNumber: this.state.groupNumber,
+                leader: this.state.leader
+            }),
+            method: 'POST',
+            headers: {
+                'Content-Type':'application/json'
+            }
+        };
+
+        const servers = await this._sendRequest(options);
+        console.log(this.currentServer, 'servers', servers);
+        this.state.groupServers.push(...servers['servers']);
     }
 
     async _sendRequest(options) {
@@ -82,5 +99,36 @@ exports.Actions = class Actions {
         } catch (err) {
             return {error: err};
         }
+    }
+
+    async mergeAction(body) {
+        console.log('/merge request');
+        this.state.groupNumber = body.groupNumber;
+        this.state.leader = body.leader;
+        for (const i in this.state.groupServers) {
+            const server = this.state.groupServers[i];
+            if (server === this.currentServer) {
+                continue;
+            }
+
+            const options = {
+                url: 'http://' + server,
+                body: JSON.stringify({
+                    action: 'merge',
+                    groupNumber: this.state.groupNumber,
+                    leader: this.state.leader
+                }),
+                method: 'POST',
+                headers: {
+                    'Content-Type':'application/json'
+                }
+            };
+
+            await this._sendRequest(options);
+        }
+        const result = this.state.groupServers;
+        this.state.groupServers = [];
+        console.log(this.currentServer, 'result', result);
+        return {servers: result};
     }
 }

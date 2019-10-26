@@ -16,12 +16,17 @@ exports.initApp = function(ip, port, servers) {
         res.send({
             status: 'Ok',
             time: new Date().getTime(),
+            isLeader: a.state.isLeader,
+            leader: a.state.leader,
         });
     });
 
     app.post('/', function(req, res) {
         console.log('/ request');
         switch (req.body.action) {
+            case 'merge':
+                res.send(a[req.body.action + 'Action'](req.body));
+                break;
             default:
                 res.send('{"error": "Incorrect action"}');
                 break;
