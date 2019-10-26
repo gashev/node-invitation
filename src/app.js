@@ -21,11 +21,13 @@ exports.initApp = function(ip, port, servers) {
         });
     });
 
-    app.post('/', function(req, res) {
+    app.post('/', async function(req, res) {
         console.log('/ request');
         switch (req.body.action) {
             case 'merge':
-                res.send(a[req.body.action + 'Action'](req.body));
+                const result = await a[req.body.action + 'Action'](req.body);
+                console.log('RESULT IN app.js: ', result)
+                res.send(result);
                 break;
             default:
                 res.send('{"error": "Incorrect action"}');

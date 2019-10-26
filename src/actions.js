@@ -28,7 +28,11 @@ exports.Actions = class Actions {
                 if (obj.state.isLeader) {
                     const leader = obj.getAnotherLeader();
                     console.log(obj.currentServer, 'Another leader - ', leader);
-                    obj.merge(leader);
+                    if (leader !== undefined) {
+                        obj.merge(leader);
+                    } else {
+                        console.log('Another leader does not exist.');
+                    }
                 }
             }
         }, 10000);
@@ -60,12 +64,21 @@ exports.Actions = class Actions {
 
     getAnotherLeader() {
         const obj = this;
-        return this.servers.filter(function(i) {
-            return obj.state.groupServers.indexOf(i) < 0;
+        return this.servers.find(function(serverAddr) {
+            const server = obj.state.servers[serverAddr];
+            return (
+                (server.status === 'Ok') &&
+                (server.isLeader) &&
+                (obj.state.groupServers.indexOf(serverAddr) < 0)
+            );
         });
     }
 
     async merge(leader) {
+        if (this.state.currentAction !== undefined) {
+            return {error: 'Current action: ' + this.state.currentAction}
+        }
+        this.state.currentAction = 'merge';
         const options = {
             url: 'http://' + leader,
             body: JSON.stringify({
@@ -78,10 +91,14 @@ exports.Actions = class Actions {
                 'Content-Type':'application/json'
             }
         };
-
+        console.log(this.currentServer, 'options', options);
         const servers = await this._sendRequest(options);
         console.log(this.currentServer, 'servers', servers);
-        this.state.groupServers.push(...servers['servers']);
+        if (servers['servers'] !== undefined) {
+            this.state.groupServers.push(...servers['servers']);
+
+        }
+        this.state.currentAction = undefined;
     }
 
     async _sendRequest(options) {
@@ -102,9 +119,16 @@ exports.Actions = class Actions {
     }
 
     async mergeAction(body) {
-        console.log('/merge request');
+        if (this.state.currentAction !== undefined) {
+            console.log('Error: current action: ' + this.state.currentAction);
+            return {error: 'Current action: ' + this.state.currentAction};
+        }
+        this.state.currentAction = 'merge';
+        console.log('merge request');
+        const result = this.state.groupServers;
         this.state.groupNumber = body.groupNumber;
         this.state.leader = body.leader;
+        this.state.isLeader = false;
         for (const i in this.state.groupServers) {
             const server = this.state.groupServers[i];
             if (server === this.currentServer) {
@@ -126,9 +150,9 @@ exports.Actions = class Actions {
 
             await this._sendRequest(options);
         }
-        const result = this.state.groupServers;
         this.state.groupServers = [];
-        console.log(this.currentServer, 'result', result);
+        console.log(this.currentServer, 'result', result, JSON.stringify({servers: result}));
+        this.state.currentAction = undefined;
         return {servers: result};
     }
 }

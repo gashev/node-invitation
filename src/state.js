@@ -5,5 +5,6 @@ exports.State = class State {
         this.leader = undefined;
         this.isLeader = false;
         this.servers = {};
+        this.currentAction = undefined;
     }
 }
