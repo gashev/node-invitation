@@ -6,18 +6,25 @@ exports.Actions = class Actions {
         this.currentServer = currentServer;
         this.servers = servers;
         this.state = new state.State();
-        this.updateServersStatus(this);
+        this.configureIntervalTasks();
     }
 
-    updateServersStatus(obj) {
+    _updateServersStatus() {
+        const obj = this;
+        obj.servers.forEach(async function (server) {
+            const options = {
+                url: 'http://' + server + '/ping',
+                method: 'GET',
+            };
+            obj.state.servers[server] = await obj._sendRequest(options);
+        });
+    }
+
+    configureIntervalTasks() {
+        const obj = this;
+
         setInterval(() => {
-            obj.servers.forEach(async function (server) {
-                const options = {
-                    url: 'http://' + server + '/ping',
-                    method: 'GET',
-                };
-                obj.state.servers[server] = await obj._sendRequest(options);
-            });
+            obj._updateServersStatus();
 
             if (!obj.isLeaderAvailable()) {
                 obj.state.leader = undefined;
