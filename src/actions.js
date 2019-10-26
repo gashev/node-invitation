@@ -23,41 +23,20 @@ exports.Actions = class Actions {
     configureIntervalTasks() {
         const obj = this;
 
+        obj.initCurrentServerLeader();
+
         setInterval(() => {
             obj._updateServersStatus();
-
-            if (!obj.isLeaderAvailable()) {
-                obj.state.leader = undefined;
-            }
-            if (obj.state.leader === undefined) {
-                obj.initCurrentServerLeader();
-            } else {
-                if (obj.state.isLeader) {
-                    const leader = obj.getAnotherLeader();
-                    console.log(obj.currentServer, 'Another leader - ', leader);
-                    if (leader !== undefined) {
-                        obj.merge(leader);
-                    } else {
-                        console.log('Another leader does not exist.');
-                    }
+            if (obj.state.isLeader) {
+                const leader = obj.getAnotherLeader();
+                console.log(obj.currentServer, 'Another leader - ', leader);
+                if (leader !== undefined) {
+                    obj.merge(leader);
+                } else {
+                    console.log('Another leader does not exist.');
                 }
             }
         }, 10000);
-    }
-
-    isLeaderAvailable() {
-        console.log(this.currentServer, this.state.servers[this.currentServer]);
-        if (this.state.servers[this.currentServer] === undefined) {
-            return false;
-        }
-        if (this.state.servers[this.currentServer]['error'] !== undefined) {
-            return false;
-        }
-        if (this.state.servers[this.currentServer]['status'] === 'Ok') {
-            return true;
-        }
-
-        return false;
     }
 
     initCurrentServerLeader() {
@@ -74,6 +53,7 @@ exports.Actions = class Actions {
         return this.servers.find(function(serverAddr) {
             const server = obj.state.servers[serverAddr];
             return (
+                (server !== undefined) &&
                 (server.status === 'Ok') &&
                 (server.isLeader) &&
                 (obj.state.groupServers.indexOf(serverAddr) < 0)
