@@ -31,7 +31,9 @@ exports.Actions = class Actions {
                 const leader = obj.getAnotherLeader();
                 console.log(obj.currentServer, 'Another leader - ', leader);
                 if (leader !== undefined) {
-                    obj.merge(leader);
+                    if (this.state.currentAction === undefined) {
+                        obj.merge(leader);
+                    }
                 } else {
                     console.log('Another leader does not exist.');
                 }
@@ -127,7 +129,7 @@ exports.Actions = class Actions {
                 body: JSON.stringify({
                     action: 'merge',
                     groupNumber: this.state.groupNumber,
-                    leader: this.state.leader
+                    leader: body.leader
                 }),
                 method: 'POST',
                 headers: {
