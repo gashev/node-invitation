@@ -71,7 +71,7 @@ exports.Actions = class Actions {
             body: JSON.stringify({
                 action: 'merge',
                 groupNumber: this.state.groupNumber,
-                leader: this.state.leader
+                leader: this.currentServer,
             }),
             method: 'POST',
             headers: {
