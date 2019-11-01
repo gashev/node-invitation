@@ -6,7 +6,17 @@ exports.Actions = class Actions {
         this.currentServer = currentServer;
         this.servers = servers;
         this.state = new state.State();
+        this._initCurrentServerAsLeader();
         this.configureIntervalTasks();
+    }
+
+    _initCurrentServerAsLeader() {
+        console.log('_initCurrentServerAsLeader');
+        this.state.groupNumber = new Date().getTime();
+        this.state.leader = this.currentServer;
+        this.state.groupServers = [this.currentServer];
+        this.state.isLeader = true;
+        console.log(this);
     }
 
     _updateServersStatus() {
@@ -22,8 +32,6 @@ exports.Actions = class Actions {
 
     configureIntervalTasks() {
         const obj = this;
-
-        obj.initCurrentServerLeader();
 
         setInterval(() => {
             obj._updateServersStatus();
@@ -41,15 +49,6 @@ exports.Actions = class Actions {
         }, 10000);
     }
 
-    initCurrentServerLeader() {
-        console.log('initCurrentServerLeader');
-        this.state.groupNumber = new Date().getTime();
-        this.state.leader = this.currentServer;
-        this.state.groupServers = [this.currentServer];
-        this.state.isLeader = true;
-        console.log(this);
-    }
-
     getAnotherLeader() {
         const obj = this;
         return this.servers.find(function(serverAddr) {
@@ -64,10 +63,6 @@ exports.Actions = class Actions {
     }
 
     async merge(leader) {
-        if (this.state.currentAction !== undefined) {
-            return {error: 'Current action: ' + this.state.currentAction}
-        }
-        this.state.currentAction = 'merge';
         const options = {
             url: 'http://' + leader,
             body: JSON.stringify({
@@ -80,14 +75,7 @@ exports.Actions = class Actions {
                 'Content-Type':'application/json'
             }
         };
-        console.log(this.currentServer, 'options', options);
         const servers = await this._sendRequest(options);
-        console.log(this.currentServer, 'servers', servers);
-        if (servers['servers'] !== undefined) {
-            this.state.groupServers.push(...servers['servers']);
-
-        }
-        this.state.currentAction = undefined;
     }
 
     async _sendRequest(options) {
@@ -105,6 +93,20 @@ exports.Actions = class Actions {
         } catch (err) {
             return {error: err};
         }
+    }
+
+    async acceptAction(body) {
+        if (this.state.isLeader) {
+            this.state.groupServers.push(body.server); // @todo: validate uniqness of groupServers items.
+            return  {
+                status: 'Ok',
+                groupNumber: this.state.groupNumber,
+            };
+        }
+
+        return  {
+            error: 'Server is not leader',
+        };
     }
 
     async mergeAction(body) {
@@ -139,9 +141,25 @@ exports.Actions = class Actions {
 
             await this._sendRequest(options);
         }
-        this.state.groupServers = [];
-        console.log(this.currentServer, 'result', result, JSON.stringify({servers: result}));
-        this.state.currentAction = undefined;
-        return {servers: result};
+
+        const acceptOtions = {
+            url: 'http://' + body.leader,
+            body: JSON.stringify({
+                action: 'accept',
+                server: this.currentServer
+            }),
+            method: 'POST',
+            headers: {
+                'Content-Type':'application/json'
+            }
+        };
+
+        const acceptResult = await this._sendRequest(acceptOtions);
+        if (acceptResult['status'] === 'Ok') {
+            this.state.isLeader = false;
+            this.state.leader = body.leader;
+            this.state.groupNumber = acceptResult['groupNumber'];
+            this.state.groupServers = [];
+        }
     }
 }

@@ -23,6 +23,7 @@ exports.initApp = function(ip, port, servers) {
     app.post('/', async function(req, res) {
         console.log('/ request');
         switch (req.body.action) {
+            case 'accept':
             case 'merge':
                 res.send(await a[req.body.action + 'Action'](req.body));
                 break;
