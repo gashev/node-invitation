@@ -96,14 +96,22 @@ exports.Actions = class Actions {
     }
 
     async acceptAction(body) {
+        if (this.state.currentAction !== undefined) {
+            console.log('Error: current action: ' + this.state.currentAction);
+            return {error: 'Current action: ' + this.state.currentAction};
+        }
+        this.state.currentAction = 'accept';
+
         if (this.state.isLeader) {
             this.state.groupServers.push(body.server); // @todo: validate uniqness of groupServers items.
+            this.state.currentAction = undefined;
             return  {
                 status: 'Ok',
                 groupNumber: this.state.groupNumber,
             };
         }
 
+        this.state.currentAction = undefined;
         return  {
             error: 'Server is not leader',
         };
@@ -116,10 +124,6 @@ exports.Actions = class Actions {
         }
         this.state.currentAction = 'merge';
         console.log('merge request');
-        const result = this.state.groupServers;
-        this.state.groupNumber = body.groupNumber;
-        this.state.leader = body.leader;
-        this.state.isLeader = false;
         for (const i in this.state.groupServers) {
             const server = this.state.groupServers[i];
             if (server === this.currentServer) {
@@ -161,5 +165,6 @@ exports.Actions = class Actions {
             this.state.groupNumber = acceptResult['groupNumber'];
             this.state.groupServers = [];
         }
+        this.state.currentAction = undefined;
     }
 }
