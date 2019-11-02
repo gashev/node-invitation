@@ -20,17 +20,14 @@ exports.initApp = function(ip, port, servers) {
         });
     });
 
-    app.post('/', async function(req, res) {
-        console.log('/ request');
-        switch (req.body.action) {
-            case 'accept':
-            case 'merge':
-                res.send(await a[req.body.action + 'Action'](req.body));
-                break;
-            default:
-                res.send('{"error": "Incorrect action"}');
-                break;
-        }
+    app.post('/merge', async function(req, res) {
+        console.log('/merge request');
+        res.send(await a.mergeAction(req.body));
+    });
+
+    app.post('/accept', async function(req, res) {
+        console.log('/accept request');
+        res.send(await a.acceptAction(req.body));
     });
 
     app.listen(port, ip, () => console.log(`Example app listening on port ${port}!`));

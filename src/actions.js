@@ -97,9 +97,8 @@ exports.Actions = class Actions {
 
     async sendAcceptRequest(leader) {
         const acceptOtions = {
-            url: 'http://' + leader,
+            url: 'http://' + leader + '/accept',
             body: JSON.stringify({
-                action: 'accept',
                 server: this.currentServer
             }),
             method: 'POST',
@@ -113,9 +112,8 @@ exports.Actions = class Actions {
 
     async sendMergeRequest(server, leader, groupNumber) {
         const options = {
-            url: 'http://' + server,
+            url: 'http://' + server + '/merge',
             body: JSON.stringify({
-                action: 'merge',
                 groupNumber: groupNumber,
                 leader: leader,
             }),
