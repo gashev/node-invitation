@@ -48,28 +48,31 @@ exports.Actions = class Actions {
         }
     }
 
+    _checkAnotherLeader() {
+        if (this.state.isLeader) {
+            const leader = this.getAnotherLeader();
+            console.log(this.currentServer, 'Another leader - ', leader);
+            if (leader !== undefined) {
+                if (this.state.currentAction === undefined) {
+                    this.sendMergeRequest(
+                        leader,
+                        this.currentServer,
+                        this.state.groupNumber
+                    );
+                }
+            } else {
+                console.log('Another leader does not exist.');
+            }
+        }
+    }
+
     configureIntervalTasks() {
         const obj = this;
 
         setInterval(() => {
             obj._updateServersStatus();
             obj._checkLeaderStatus();
-
-            if (obj.state.isLeader) {
-                const leader = obj.getAnotherLeader();
-                console.log(obj.currentServer, 'Another leader - ', leader);
-                if (leader !== undefined) {
-                    if (this.state.currentAction === undefined) {
-                        obj.sendMergeRequest(
-                            leader,
-                            this.currentServer,
-                            this.state.groupNumber
-                        );
-                    }
-                } else {
-                    console.log('Another leader does not exist.');
-                }
-            }
+            obj._checkAnotherLeader();
         }, 10000);
     }
 
