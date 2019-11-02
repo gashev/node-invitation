@@ -30,11 +30,31 @@ exports.Actions = class Actions {
         });
     }
 
+    _checkLeaderStatus() {
+        if (this.state.isLeader) {
+            return;
+        }
+
+        if(this.state.servers[this.state.leader] === undefined) {
+            return;
+        }
+
+        if ((this.state.servers[this.state.leader].error !== undefined) ||
+            (!this.state.servers[this.state.leader].isLeader)
+        ) {
+            this.state.isLeader = true;
+            this.state.groupServers = [ this.currentServer];
+            this.state.leader = this.currentServer;
+        }
+    }
+
     configureIntervalTasks() {
         const obj = this;
 
         setInterval(() => {
             obj._updateServersStatus();
+            obj._checkLeaderStatus();
+
             if (obj.state.isLeader) {
                 const leader = obj.getAnotherLeader();
                 console.log(obj.currentServer, 'Another leader - ', leader);
@@ -64,6 +84,22 @@ exports.Actions = class Actions {
                 (obj.state.groupServers.indexOf(serverAddr) < 0)
             );
         });
+    }
+
+    async sendAcceptRequest(leader) {
+        const acceptOtions = {
+            url: 'http://' + leader,
+            body: JSON.stringify({
+                action: 'accept',
+                server: this.currentServer
+            }),
+            method: 'POST',
+            headers: {
+                'Content-Type':'application/json'
+            }
+        };
+
+        return await this._sendRequest(acceptOtions);
     }
 
     async sendMergeRequest(server, leader, groupNumber) {
@@ -147,21 +183,5 @@ exports.Actions = class Actions {
             this.state.groupServers = [];
         }
         this.state.currentAction = undefined;
-    }
-
-    async sendAcceptRequest(leader) {
-        const acceptOtions = {
-            url: 'http://' + leader,
-            body: JSON.stringify({
-                action: 'accept',
-                server: this.currentServer
-            }),
-            method: 'POST',
-            headers: {
-                'Content-Type':'application/json'
-            }
-        };
-
-        return await this._sendRequest(acceptOtions);
     }
 }
