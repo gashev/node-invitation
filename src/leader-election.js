@@ -142,7 +142,7 @@ exports.Node = class Node {
         }
     }
 
-    async acceptAction(body) {
+    async acceptRequest(body) {
         if (this.state.currentAction !== undefined) {
             console.log('Error: current action: ' + this.state.currentAction);
             return {error: 'Current action: ' + this.state.currentAction};
@@ -164,7 +164,7 @@ exports.Node = class Node {
         };
     }
 
-    async mergeAction(body) {
+    async mergeRequest(body) {
         if (this.state.currentAction !== undefined) {
             console.log('Error: current action: ' + this.state.currentAction);
             return {error: 'Current action: ' + this.state.currentAction};
@@ -193,7 +193,7 @@ exports.Node = class Node {
         this.state.currentAction = undefined;
     }
 
-    pingAction() {
+    pingRequest() {
         return {
             status: 'Ok',
             time: new Date().getTime(),
@@ -202,7 +202,7 @@ exports.Node = class Node {
         };
     }
 
-    statusAction() {
+    statusRequest() {
         return this.state;
     }
 }

@@ -8,22 +8,22 @@ exports.initApp = function(ip, port, servers) {
 
     app.get('/status', function(req, res) {
         console.log('/status request');
-        res.send(node.statusAction());
+        res.send(node.statusRequest());
     });
 
     app.get('/ping', function(req, res) {
         console.log('/ping request');
-        res.send(node.pingAction());
+        res.send(node.pingRequest());
     });
 
     app.post('/merge', async function(req, res) {
         console.log('/merge request');
-        res.send(await node.mergeAction(req.body));
+        res.send(await node.mergeRequest(req.body));
     });
 
     app.post('/accept', async function(req, res) {
         console.log('/accept request');
-        res.send(await node.acceptAction(req.body));
+        res.send(await node.acceptRequest(req.body));
     });
 
     app.listen(port, ip, () => console.log(`Example app listening on port ${port}!`));
