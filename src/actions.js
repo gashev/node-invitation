@@ -164,6 +164,15 @@ exports.Actions = class Actions {
         };
     }
 
+    pingAction() {
+        return {
+            status: 'Ok',
+            time: new Date().getTime(),
+            isLeader: this.state.isLeader,
+            leader: this.state.leader,
+        };
+    }
+
     async mergeAction(body) {
         if (this.state.currentAction !== undefined) {
             console.log('Error: current action: ' + this.state.currentAction);

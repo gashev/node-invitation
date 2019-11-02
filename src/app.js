@@ -12,12 +12,7 @@ exports.initApp = function(ip, port, servers) {
 
     app.get('/ping', function(req, res) {
         console.log('/ping request');
-        res.send({
-            status: 'Ok',
-            time: new Date().getTime(),
-            isLeader: a.state.isLeader,
-            leader: a.state.leader,
-        });
+        res.send(a.pingAction());
     });
 
     app.post('/merge', async function(req, res) {
