@@ -164,6 +164,10 @@ exports.Actions = class Actions {
         };
     }
 
+    statusAction() {
+        return this.state;
+    }
+
     pingAction() {
         return {
             status: 'Ok',

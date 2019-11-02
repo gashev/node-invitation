@@ -6,8 +6,9 @@ exports.initApp = function(ip, port, servers) {
     const app = express();
     app.use(express.json())
 
-    app.get('/', function(req, res) {
-        res.send(a.state);
+    app.get('/status', function(req, res) {
+        console.log('/status request');
+        res.send(a.statusAction());
     });
 
     app.get('/ping', function(req, res) {
