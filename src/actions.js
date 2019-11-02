@@ -40,7 +40,11 @@ exports.Actions = class Actions {
                 console.log(obj.currentServer, 'Another leader - ', leader);
                 if (leader !== undefined) {
                     if (this.state.currentAction === undefined) {
-                        obj.sendMergeRequest(leader);
+                        obj.sendMergeRequest(
+                            leader,
+                            this.currentServer,
+                            this.state.groupNumber
+                        );
                     }
                 } else {
                     console.log('Another leader does not exist.');
@@ -62,20 +66,20 @@ exports.Actions = class Actions {
         });
     }
 
-    async sendMergeRequest(leader) {
+    async sendMergeRequest(server, leader, groupNumber) {
         const options = {
-            url: 'http://' + leader,
+            url: 'http://' + server,
             body: JSON.stringify({
                 action: 'merge',
-                groupNumber: this.state.groupNumber,
-                leader: this.currentServer,
+                groupNumber: groupNumber,
+                leader: leader,
             }),
             method: 'POST',
             headers: {
                 'Content-Type':'application/json'
             }
         };
-        const servers = await this._sendRequest(options);
+        await this._sendRequest(options);
     }
 
     async _sendRequest(options) {
@@ -124,26 +128,15 @@ exports.Actions = class Actions {
         }
         this.state.currentAction = 'merge';
         console.log('merge request');
-        for (const i in this.state.groupServers) {
-            const server = this.state.groupServers[i];
-            if (server === this.currentServer) {
-                continue;
-            }
-
-            const options = {
-                url: 'http://' + server,
-                body: JSON.stringify({
-                    action: 'merge',
-                    groupNumber: this.state.groupNumber,
-                    leader: body.leader
-                }),
-                method: 'POST',
-                headers: {
-                    'Content-Type':'application/json'
+        if (this.state.isLeader) {
+            for (const i in this.state.groupServers) {
+                const server = this.state.groupServers[i];
+                if (server === this.currentServer) {
+                    continue;
                 }
-            };
 
-            await this._sendRequest(options);
+                await this.sendMergeRequest(server, body.leader, body.groupNumber);
+            }
         }
 
         const acceptResult = await this.sendAcceptRequest(body.leader);
