@@ -14,7 +14,8 @@ exports.Actions = class Actions {
         console.log('_initCurrentServerAsLeader');
         this.state.groupNumber = new Date().getTime();
         this.state.leader = this.currentServer;
-        this.state.groupServers = [this.currentServer];
+        this.state.emptyGroupServersList();
+        this.state.addServerToGroup(this.currentServer);
         this.state.isLeader = true;
         console.log(this);
     }
@@ -43,7 +44,8 @@ exports.Actions = class Actions {
             (!this.state.servers[this.state.leader].isLeader)
         ) {
             this.state.isLeader = true;
-            this.state.groupServers = [ this.currentServer];
+            this.state.emptyGroupServersList();
+            this.state.addServerToGroup(this.currentServer);
             this.state.leader = this.currentServer;
         }
     }
@@ -84,7 +86,7 @@ exports.Actions = class Actions {
                 (server !== undefined) &&
                 (server.status === 'Ok') &&
                 (server.isLeader) &&
-                (obj.state.groupServers.indexOf(serverAddr) < 0)
+                (!obj.state.isServerExist(serverAddr))
             );
         });
     }
@@ -146,7 +148,7 @@ exports.Actions = class Actions {
         this.state.currentAction = 'accept';
 
         if (this.state.isLeader) {
-            this.state.groupServers.push(body.server); // @todo: validate uniqness of groupServers items.
+            this.state.addServerToGroup(body.server);
             this.state.currentAction = undefined;
             return  {
                 status: 'Ok',
@@ -168,8 +170,9 @@ exports.Actions = class Actions {
         this.state.currentAction = 'merge';
         console.log('merge request');
         if (this.state.isLeader) {
-            for (const i in this.state.groupServers) {
-                const server = this.state.groupServers[i];
+            const groupServers = this.state.getGroupServers();
+            for (const i in groupServers) {
+                const server = groupServers[i];
                 if (server === this.currentServer) {
                     continue;
                 }
@@ -183,7 +186,7 @@ exports.Actions = class Actions {
             this.state.isLeader = false;
             this.state.leader = body.leader;
             this.state.groupNumber = acceptResult['groupNumber'];
-            this.state.groupServers = [];
+            this.state.emptyGroupServersList();
         }
         this.state.currentAction = undefined;
     }
