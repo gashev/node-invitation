@@ -7,7 +7,7 @@ exports.Node = class Node {
         this.servers = servers;
         this.state = new state.State();
         this._initCurrentServerAsLeader();
-        this.configureIntervalTasks();
+        this._configureIntervalTasks();
     }
 
     _initCurrentServerAsLeader() {
@@ -55,7 +55,7 @@ exports.Node = class Node {
             return;
         }
 
-        const leader = this.getAnotherLeader();
+        const leader = this._getAnotherLeader();
         console.log(this.currentServer, 'Another leader - ', leader);
 
         if (leader === undefined) {
@@ -64,7 +64,7 @@ exports.Node = class Node {
         }
 
         if (this.state.currentAction === undefined) {
-            this.sendMergeRequest(
+            this._sendMergeRequest(
                 leader,
                 this.currentServer,
                 this.state.groupNumber
@@ -72,7 +72,7 @@ exports.Node = class Node {
         }
     }
 
-    configureIntervalTasks() {
+    _configureIntervalTasks() {
         const obj = this;
 
         setInterval(() => {
@@ -82,7 +82,7 @@ exports.Node = class Node {
         }, 10000);
     }
 
-    getAnotherLeader() {
+    _getAnotherLeader() {
         const obj = this;
         return this.servers.find(function(serverAddr) {
             const server = obj.state.servers[serverAddr];
@@ -95,7 +95,7 @@ exports.Node = class Node {
         });
     }
 
-    async sendAcceptRequest(leader) {
+    async _sendAcceptRequest(leader) {
         const acceptOtions = {
             url: 'http://' + leader + '/accept',
             body: JSON.stringify({
@@ -110,7 +110,7 @@ exports.Node = class Node {
         return await this._sendRequest(acceptOtions);
     }
 
-    async sendMergeRequest(server, leader, groupNumber) {
+    async _sendMergeRequest(server, leader, groupNumber) {
         const options = {
             url: 'http://' + server + '/merge',
             body: JSON.stringify({
@@ -164,19 +164,6 @@ exports.Node = class Node {
         };
     }
 
-    statusAction() {
-        return this.state;
-    }
-
-    pingAction() {
-        return {
-            status: 'Ok',
-            time: new Date().getTime(),
-            isLeader: this.state.isLeader,
-            leader: this.state.leader,
-        };
-    }
-
     async mergeAction(body) {
         if (this.state.currentAction !== undefined) {
             console.log('Error: current action: ' + this.state.currentAction);
@@ -192,11 +179,11 @@ exports.Node = class Node {
                     continue;
                 }
 
-                await this.sendMergeRequest(server, body.leader, body.groupNumber);
+                await this._sendMergeRequest(server, body.leader, body.groupNumber);
             }
         }
 
-        const acceptResult = await this.sendAcceptRequest(body.leader);
+        const acceptResult = await this._sendAcceptRequest(body.leader);
         if (acceptResult['status'] === 'Ok') {
             this.state.isLeader = false;
             this.state.leader = body.leader;
@@ -204,5 +191,18 @@ exports.Node = class Node {
             this.state.emptyGroupServersList();
         }
         this.state.currentAction = undefined;
+    }
+
+    pingAction() {
+        return {
+            status: 'Ok',
+            time: new Date().getTime(),
+            isLeader: this.state.isLeader,
+            leader: this.state.leader,
+        };
+    }
+
+    statusAction() {
+        return this.state;
     }
 }
