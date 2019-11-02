@@ -1,7 +1,7 @@
 const request = require('request');
 const state = require('../src/state');
 
-exports.Actions = class Actions {
+exports.Node = class Node {
     constructor(currentServer, servers) {
         this.currentServer = currentServer;
         this.servers = servers;
