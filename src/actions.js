@@ -40,7 +40,7 @@ exports.Actions = class Actions {
                 console.log(obj.currentServer, 'Another leader - ', leader);
                 if (leader !== undefined) {
                     if (this.state.currentAction === undefined) {
-                        obj.merge(leader);
+                        obj.sendMergeRequest(leader);
                     }
                 } else {
                     console.log('Another leader does not exist.');
@@ -62,7 +62,7 @@ exports.Actions = class Actions {
         });
     }
 
-    async merge(leader) {
+    async sendMergeRequest(leader) {
         const options = {
             url: 'http://' + leader,
             body: JSON.stringify({
@@ -146,8 +146,19 @@ exports.Actions = class Actions {
             await this._sendRequest(options);
         }
 
+        const acceptResult = await this.sendAcceptRequest(body.leader);
+        if (acceptResult['status'] === 'Ok') {
+            this.state.isLeader = false;
+            this.state.leader = body.leader;
+            this.state.groupNumber = acceptResult['groupNumber'];
+            this.state.groupServers = [];
+        }
+        this.state.currentAction = undefined;
+    }
+
+    async sendAcceptRequest(leader) {
         const acceptOtions = {
-            url: 'http://' + body.leader,
+            url: 'http://' + leader,
             body: JSON.stringify({
                 action: 'accept',
                 server: this.currentServer
@@ -158,13 +169,6 @@ exports.Actions = class Actions {
             }
         };
 
-        const acceptResult = await this._sendRequest(acceptOtions);
-        if (acceptResult['status'] === 'Ok') {
-            this.state.isLeader = false;
-            this.state.leader = body.leader;
-            this.state.groupNumber = acceptResult['groupNumber'];
-            this.state.groupServers = [];
-        }
-        this.state.currentAction = undefined;
+        return await this._sendRequest(acceptOtions);
     }
 }
